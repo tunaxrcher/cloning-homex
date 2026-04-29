@@ -142,6 +142,24 @@ async function main() {
   });
   console.log(`  ✅ Position permissions linked`);
 
+  // 6. Organization Settings (AI Prompt)
+  await prisma.organization_setting.createMany({
+    data: [
+      {
+        organizationId: org.id,
+        settingKey: "AI_TASK_ROLE_PROMPT",
+        settingValue:
+          "คุณคือ AI ผู้เชี่ยวชาญระดับสูงด้านการบริหารโครงการ (Project Manager) การประเมินต้นทุน และการวางแผนงาน",
+      },
+      {
+        organizationId: org.id,
+        settingKey: "TASK_PLACEHOLDER",
+        settingValue: "เช่น งานติดตั้ง, งานซ่อมแซม, งานตรวจสอบ",
+      },
+    ],
+  });
+  console.log(`  ✅ Organization settings: AI_TASK_ROLE_PROMPT, TASK_PLACEHOLDER`);
+
   console.log("\n🎉 Seed completed!");
   console.log("📌 Login: spadmin / Homex@1234");
 }
