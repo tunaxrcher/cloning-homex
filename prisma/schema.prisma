@@ -1,0 +1,1017 @@
+// =====================================
+// Prisma Schema: Homex Project OS
+// - Multi-tenant (แยกบริษัทด้วย organizationId)
+// - User รวม Admin/Staff/Customer ไว้ตารางเดียว
+// =====================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================
+// Organization = บริษัท/องค์กร (ตัวคุมทุกอย่าง)
+// =====================================
+model organization {
+  id        Int      @id @default(autoincrement()) // PK: รหัสบริษัท
+  name      String // ชื่อบริษัท
+  slug      String?  @unique // ชื่อย่อ/URL slug (ไม่ซ้ำ)
+  createdAt DateTime @default(now()) // วันที่สร้างบริษัท
+  updatedAt DateTime @default(now()) // วันที่แก้ไขล่าสุด
+
+  // ---------- relations ----------
+  ownerId Int?
+  owner   user? @relation("org_owner", fields: [ownerId], references: [id])
+
+  users                  user[]                   @relation("org_users") // สมาชิกในบริษัททั้งหมด
+  positions              position[] // ตำแหน่งของบริษัท
+  permissions            permission[] // สิทธิ์ของบริษัท
+  projects               project[] // โปรเจคของบริษัท
+  projectUsers           project_user[]           @relation("org_project_users") // คนที่ถูกดึงเข้าโปรเจค (ตารางกลาง)
+  projectFiles           project_file[] // ไฟล์แนบโปรเจค
+  projectImgs            project_img[] // รูปแนบโปรเจค
+  tasks                  task[] // งานหลักทั้งหมดของบริษัท (ทุกโปรเจค)
+  taskDetails            task_detail[] // งานย่อยทั้งหมดของบริษัท (ทุกโปรเจค)
+  taskUsers              task_user[]              @relation("org_task_users")
+  projectsRunnings       projects_running[]
+  suppliers              supplier[]
+  contractors            contractor[]
+  taskContractors        task_contractor[]
+  feedPosts              feed_post[]
+  stories                story[]
+  storyViews             story_view[]             @relation("org_story_views")
+  procurementItems       procurement_item[]
+  procurementSuggestions procurement_suggestion[]
+  purchaseOrders         purchase_order[]
+  notifications          notification[]
+  cameras                camera[]
+  floorplans             floorplan[]
+  point360s              point360[]
+  taskActualCosts        task_actual_cost[]
+  settings               organization_setting[]
+}
+
+// =====================================
+// OrganizationSetting = ตั้งค่าของบริษัท
+// =====================================
+model organization_setting {
+  id Int @id @default(autoincrement())
+
+  organizationId Int // FK -> organization.id
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  // ---------- ตั้งค่าของบริษัท ----------
+  settingKey   String          // รหัสตั้งค่า เช่น "AI_TASK_ROLE_PROMPT"
+  settingValue String @db.LongText // ค่าตั้งค่า (รองรับ prompt ยาว)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  @@unique([organizationId, settingKey])
+}
+
+// =====================================
+// User = ผู้ใช้งาน (Admin/Staff/Customer รวมตารางเดียว)
+// =====================================
+model user {
+  id           Int      @id @default(autoincrement()) // PK: รหัสผู้ใช้
+  // ---------- login ----------
+  username     String   @unique // ชื่อผู้ใช้ (ใช้ล็อกอิน) ห้ามซ้ำ
+  email        String? // อีเมล (อาจไม่มี)
+  passwordHash String // รหัสผ่านแบบ hash (ห้ามเก็บ plain text)
+  isActive     Boolean  @default(true) // สถานะบัญชี เปิด/ปิด
+  // ---------- profile ----------
+  displayName  String? // ชื่อที่แสดงในระบบ
+  phone        String? // เบอร์โทร
+  address      String? // ที่อยู่
+  note         String? // โน้ต/ข้อมูลจำเป็นอื่น ๆ
+  avatarUrl    String? // รูปโปรไฟล์ (URL)
+  // ---------- user type (ระดับหยาบ) ----------
+  createdAt    DateTime @default(now()) // วันที่สร้างบัญชี
+  updatedAt    DateTime @default(now()) // วันที่แก้ไขล่าสุด
+
+  // ---------- relations ----------
+  // user เป็น "สมาชิกบริษัท"
+  organizationId Int // FK -> organization.id (ผู้ใช้อยู่บริษัทไหน)
+  organization   organization @relation("org_users", fields: [organizationId], references: [id])
+
+  // user มี "ตำแหน่ง" ในบริษัท
+  positionId Int? // FK -> position.id (ตำแหน่งในบริษัท)
+  position   position? @relation(fields: [positionId], references: [id])
+
+  // user เป็น "เจ้าของบริษัท" (อาจเป็นเจ้าของหลายบริษัท)
+  ownedOrganizations organization[] @relation("org_owner")
+
+  // user ถูก "ลากเข้าโปรเจค" ผ่านตารางกลาง
+  projectLinks project_user[]
+
+  // user เป็น "คนสร้างโปรเจค"
+  createdProjects project[] @relation("project_creator")
+
+  // user เป็น "คนสร้าง task"
+  createdTasks task[] @relation("task_creator")
+
+  // user เป็น "ผู้อัปโหลดไฟล์"
+  uploadedFiles                 project_file[]           @relation("project_file_uploader")
+  uploadedImgs                  project_img[]            @relation("project_img_uploader")
+  taskUsers                     task_user[]
+  feedPosts                     feed_post[]              @relation("feed_post_author")
+  feedLikes                     feed_like[]              @relation("feed_like_user")
+  feedComments                  feed_comment[]           @relation("feed_comment_user")
+  feedCommentLikes              feed_comment_like[]      @relation("feed_comment_like_user")
+  feedShares                    feed_share[]             @relation("feed_share_user")
+  procurementItemsCreated       procurement_item[]       @relation("procurement_item_creator")
+  procurementSuggestionsCreated procurement_suggestion[] @relation("procurement_suggestion_creator")
+  procurementHistories          procurement_history[]    @relation("procurement_history_user")
+  procurementTaskConfirms       procurement_task_link[]  @relation("procurement_task_confirmer")
+  purchaseOrdersCreated         purchase_order[]         @relation("purchase_order_creator")
+  notifications                 notification[]           @relation("notification_user")
+  stories                       story[]                  @relation("story_author")
+  storyViews                    story_view[]             @relation("story_viewer")
+  cameras                       camera[]
+  floorplans                    floorplan[]
+  point360s                     point360[]
+  actualCostsCreated             task_actual_cost[] @relation("actual_cost_creator")
+}
+
+// =====================================
+// Position = ตำแหน่ง (เช่น Admin/CEO/Manager/Customer)
+// - เป็นของแต่ละบริษัท (org แยกกัน)
+// =====================================
+model position {
+  id Int @id @default(autoincrement()) // PK: รหัสตำแหน่ง
+
+  positionName String // ชื่อตำแหน่ง เช่น "CEO", "Engineer", "Customer"
+  positionDesc String? // คำอธิบายตำแหน่ง
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+
+  // ---------- relations ----------
+  organizationId Int // FK -> organization.id (ตำแหน่งอยู่บริษัทไหน)
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  users       user[] // คนที่อยู่ตำแหน่งนี้
+  permissions position_permission[] // สิทธิ์ของตำแหน่งนี้
+}
+
+// =====================================
+// Permission = สิทธิ์ (เช่น PROJECT_VIEW, TASK_EDIT)
+// - แยกตามบริษัท
+// =====================================
+model permission {
+  id Int @id @default(autoincrement())
+
+  permissionKey  String // รหัสสิทธิ์ เช่น "PROJECT_VIEW"
+  permissionName String // ชื่อแสดงผล เช่น "ดูโปรเจค"
+  permissionDesc String? // รายละเอียดเพิ่มเติม
+  isActive       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  // ---------- relations ----------
+  organizationId Int // FK -> organization.id
+  organization   organization          @relation(fields: [organizationId], references: [id])
+  positions      position_permission[] // ตำแหน่งไหนมีสิทธิ์นี้
+}
+
+// =====================================
+// PositionPermission = ตารางกลาง (ตำแหน่ง ↔ สิทธิ์)
+// - บอกว่า "ตำแหน่งนี้" มี/ไม่มี "สิทธิ์นี้"
+// =====================================
+model position_permission {
+  id      Int     @id @default(autoincrement())
+  allowed Boolean @default(false) // เปิด/ปิดสิทธิ์ (เผื่อทำ override)
+
+  positionId Int // FK -> position.id
+  position   position @relation(fields: [positionId], references: [id])
+
+  permissionId Int // FK -> permission.id
+  permission   permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([positionId, permissionId])
+}
+
+// =====================================
+// Project = โปรเจคของบริษัท
+// =====================================
+model project {
+  id Int @id @default(autoincrement())
+
+  projectName String? // ชื่อโปรเจค
+  projectDesc String? // รายละเอียด
+
+  customerName String? // ✅ ชื่อลูกค้า
+  budget       Decimal? @db.Decimal(12, 2) // งบประมาณ
+
+  address       String? // ที่อยู่หน้างาน
+  mapUrl        String? // ลิงก์ Google Maps
+  coverImageUrl String? // รูปปกโปรเจค
+  coverVideoUrl String? // รูปปกโปรเจค
+
+  status          String @default("PLANNING") // PLANNING / IN_PROGRESS / ON_HOLD / DONE
+  progressPercent Int    @default(0) // 0..100 (ความคืบหน้าโดยรวม)
+
+  // ---------- planned schedule ----------
+  startPlanned  DateTime? // วันที่เริ่มตามแผน
+  finishPlanned DateTime? // วันที่เสร็จตามแผน
+  durationDays  Int? // ระยะเวลาตามแผน (วัน)
+
+  // ---------- actual schedule ----------
+  startActual  DateTime? // วันที่เริ่มจริง
+  finishActual DateTime? // วันที่เสร็จจริง
+
+  // ผู้สร้างโปรเจค
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  phaseNumber Int? // ลำดับ phase 1,2,3,...
+  rootProjectId Int?  // โปรเจคต้นทางสุด
+
+  // ---------- relations ----------
+
+  parentProjectId Int?  // มาจาก project ไหน
+  parentProject   project? @relation("project_parent", fields: [parentProjectId], references: [id])
+  childProjects   project[] @relation("project_parent")
+  
+  organizationId Int // FK -> organization.id
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  createdById Int
+  creator     user @relation("project_creator", fields: [createdById], references: [id])
+
+  projectCode String?           @unique // รหัสโปรเจคที่ไม่ซ้ำ (เช่น "PROJ-001")
+  code        projects_running? @relation(fields: [projectCode], references: [runningCode])
+
+  members                project_user[] // คนที่ถูกลากเข้าโปรเจค
+  tasks                  task[] // งานหลักในโปรเจค
+  taskDetails            task_detail[] // งานย่อยทั้งหมดของโปรเจค
+  files                  project_file[] // ไฟล์แนบของโปรเจค
+  imgs                   project_img[] // รูปแนบของโปรเจค
+  feedPosts              feed_post[]
+  stories                story[]
+  procurementItems       procurement_item[]
+  procurementSuggestions procurement_suggestion[]
+  purchaseOrders         purchase_order[]
+  cameras                camera[]
+  floorplans             floorplan[]
+  point360s              point360[]
+}
+
+// =====================================
+// ProjectFile = ไฟล์แนบโปรเจค (เอกสาร)
+// =====================================
+model project_file {
+  id         Int      @id @default(autoincrement())
+  fileName   String // ชื่อไฟล์ที่แสดง
+  fileUrl    String // URL ไฟล์จริง (S3/Spaces/etc.)
+  fileType   String? // ประเภทเอกสาร เช่น BOQ, PLAN
+  note       String? // โน้ตประกอบไฟล์
+  fileStatus String?  @default("ACTIVE")
+  createdAt  DateTime @default(now())
+
+  // ---------- relations ----------
+  organizationId Int // FK -> organization.id
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  projectId Int // FK -> project.id
+  project   project @relation(fields: [projectId], references: [id])
+
+  uploadedById Int?
+  uploader     user? @relation("project_file_uploader", fields: [uploadedById], references: [id])
+}
+
+// =====================================
+// ProjectFile = ไฟล์แนบโปรเจค (เอกสาร)
+// =====================================
+
+model project_img {
+  id        Int      @id @default(autoincrement())
+  imgName   String? // ชื่อรูปที่แสดง (ถ้ามี)
+  imgUrl    String // URL รูปจริง
+  imgType   String // ประเภทรูป เช่น SITE_BEFORE, SITE_PROGRESS, SITE_AFTER, OTHER
+  note      String? // โน้ตประกอบภาพ
+  createdAt DateTime @default(now())
+
+  // relations
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  projectId Int
+  project   project @relation(fields: [projectId], references: [id])
+
+  uploadedById Int?
+  uploader     user? @relation("project_img_uploader", fields: [uploadedById], references: [id])
+}
+
+// =====================================
+// ProjectUser = ตารางกลาง "คนในทีมโปรเจค"
+// =====================================
+model project_user {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) // วันที่ถูกเพิ่มเข้าโปรเจค
+
+  // ---------- relations ----------
+  organizationId Int // FK -> organization.id (ไว้ filter ง่าย)
+  organization   organization @relation("org_project_users", fields: [organizationId], references: [id])
+
+  projectId Int // FK -> project.id
+  project   project @relation(fields: [projectId], references: [id])
+
+  userId Int // FK -> user.id
+  user   user @relation(fields: [userId], references: [id])
+}
+
+// =====================================
+// Task = งานหลัก (เช่น ออกแบบ, ตรวจสอบ, ผลิต)
+// =====================================
+model task {
+  id              Int     @id @default(autoincrement())
+  taskName        String? // ชื่องาน เช่น "ออกแบบระบบ"
+  taskDesc        String? // รายละเอียดงาน
+  status          String  @default("TODO") // TODO / DOING / DONE / BLOCKED
+  progressPercent Int     @default(0) // ความคืบหน้า 0..100
+  coverImageUrl   String? // รูปตัวแทนงาน (1 รูป)
+
+  // 🌟 --- AI Estimation (ข้อมูลประเมินจาก AI) ---
+  estimatedBudget       Decimal?  @db.Decimal(12, 2) // ราคากลาง (ประเมินโดย AI)
+  startAiPlanned        DateTime?
+  estimatedDurationDays Int? // ระยะเวลาทำงานคร่าวๆ (จำนวนวัน ประเมินโดย AI)
+
+  // planned schedule
+  startPlanned  DateTime?
+  finishPlanned DateTime?
+  durationDays  Int?
+  budget        Decimal?  @db.Decimal(12, 2) // งบประมาณ
+  // actual schedule
+  startActual   DateTime?
+  finishActual  DateTime?
+
+  orderAi   Int?              // เรียงลำดับโดย AI
+  phaseAi   String?           // กลุ่ม phase
+  isPlanned Boolean @default(false) // สถานะการสร้าง Planned
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now())
+
+  // ---------- relations ----------
+  organizationId Int // FK -> organization.id
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  projectId Int // FK -> project.id
+  project   project @relation(fields: [projectId], references: [id])
+
+  createdById Int // คนสร้าง task
+  creator     user @relation("task_creator", fields: [createdById], references: [id])
+
+  // 🌟 --- AI V2 Cost Breakdown ---
+  aiMaterialPercent  Int?     @default(0)
+  aiMaterialCost     Decimal? @db.Decimal(14, 2)
+  aiLaborPercent     Int?     @default(0)
+  aiLaborCost        Decimal? @db.Decimal(14, 2)
+  aiMachineryPercent Int?     @default(0)
+  aiMachineryCost    Decimal? @db.Decimal(14, 2)
+
+  // --- AI V2 Extra ---
+  aiDurationAssumptions String? @db.Text
+  aiRisks               String? @db.LongText // JSON array
+  aiMaterials           String? @db.LongText // JSON array (Draft PR)
+  phase                 String?
+
+  // --- AI Reference Data (ข้อมูลที่ผู้ใช้ใส่ตอนสร้าง Task) ---
+  aiRefDescription String? @db.Text     // คำอธิบายเพิ่มเติมสำหรับ AI
+  aiRefImages      String? @db.LongText // JSON array ของ image URLs
+
+  // ---------- relations ----------
+  details                task_detail[] // ขั้นตอนย่อยของ task
+  taskUsers              task_user[]
+  taskContractors        task_contractor[]
+  feedPosts              feed_post[]
+  procurementTaskLinks   procurement_task_link[]
+  procurementSuggestions procurement_suggestion[]
+  dependencies           task_dependency[] @relation("TaskDependencies")
+  dependsOnTasks         task_dependency[] @relation("TaskDependsOn")
+  actualCosts            task_actual_cost[]
+}
+
+// =====================================
+// TaskDetail = ขั้นตอนย่อยของงานหลัก
+// =====================================
+model task_detail {
+  id              Int       @id @default(autoincrement())
+  detailName      String // ชื่อขั้นตอน เช่น "ตรวจสอบข้อมูล"
+  detailDesc      String? // รายละเอียดขั้นตอน
+  status          Boolean   @default(false) // สถานะบัญชี เปิด/ปิด
+  // สัดส่วนของขั้นตอน (รวมกันควร = 100)
+  weightPercent   Int       @default(0) // น้ำหนักขั้นตอน (0..100)
+  progressPercent Int       @default(0) // ความคืบหน้าขั้นตอน (0..100)
+  // planned schedule
+  startPlanned    DateTime?
+  finishPlanned   DateTime?
+  durationDays    Int?
+  // actual schedule
+  startActual     DateTime?
+  finishActual    DateTime?
+  sortOrder       Int       @default(0) // ลำดับขั้นตอน
+  imageUrl        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now())
+
+  // ---------- relations ----------
+  organizationId Int // FK -> organization.id
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  projectId Int // FK -> project.id
+  project   project @relation(fields: [projectId], references: [id])
+
+  taskId Int // FK -> task.id
+  task   task @relation(fields: [taskId], references: [id])
+
+  feedPosts feed_post[]
+}
+
+model task_user {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  organizationId Int
+  organization   organization @relation("org_task_users", fields: [organizationId], references: [id])
+
+  taskId Int
+  task   task @relation(fields: [taskId], references: [id])
+
+  userId Int
+  user   user @relation(fields: [userId], references: [id])
+
+  @@unique([taskId, userId])
+}
+
+model task_dependency {
+  id           Int  @id @default(autoincrement())
+
+  taskId       Int
+  dependsOnId  Int
+
+  task         task @relation("TaskDependencies", fields: [taskId], references: [id])
+  dependsOn    task @relation("TaskDependsOn", fields: [dependsOnId], references: [id])
+
+  @@unique([taskId, dependsOnId])
+}
+
+model projects_running {
+  id          Int      @id @default(autoincrement())
+  runningCode String   @unique
+  createdAt   DateTime @default(now())
+
+  organizationId Int?
+  organization   organization? @relation(fields: [organizationId], references: [id])
+
+  project project[]
+}
+
+model supplier {
+  id Int @id @default(autoincrement())
+
+  supplierName    String
+  supplierPhone   String?
+  supplierEmail   String?
+  supplierAddress String?
+  supplierDesc    String?
+  contactPerson   String? // ชื่อผู้ติดต่อ
+  taxId           String? // เลขประจำตัวผู้เสียภาษี
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  quotes         procurement_supplier_quote[]
+  purchaseOrders purchase_order[]
+}
+
+model contractor {
+  id                Int      @id @default(autoincrement())
+  contractorName    String
+  contractorPhone   String?
+  contractorEmail   String?
+  contractorAddress String?
+  contractorDesc    String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // ---------- relations ----------
+  organizationId  Int
+  organization    organization      @relation(fields: [organizationId], references: [id])
+  taskContractors task_contractor[]
+}
+
+model task_contractor {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  // ---------- relations ----------
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  taskId Int
+  task   task @relation(fields: [taskId], references: [id])
+
+  contractorId Int
+  contractor   contractor @relation(fields: [contractorId], references: [id])
+
+  @@unique([taskId, contractorId])
+}
+
+// =====================================
+// FeedPost = โพสต์ในฟีด (สร้างอัตโนมัติเมื่อมี task event)
+// =====================================
+model feed_post {
+  id        Int      @id @default(autoincrement())
+  feedType  String // TASK_CREATED | SUBTASK_UPDATED | SUBTASK_COMPLETED | SUBTASK_DELETED
+  content   String?  @db.Text // เนื้อหาโพสต์
+  imageUrl  String?  @db.Text // รูปภาพ (เช่น coverImage ของ task)
+  createdAt DateTime @default(now())
+
+  // ---------- relations ----------
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  projectId Int
+  project   project @relation(fields: [projectId], references: [id])
+
+  taskId Int?
+  task   task? @relation(fields: [taskId], references: [id])
+
+  subtaskId Int?
+  subtask   task_detail? @relation(fields: [subtaskId], references: [id])
+
+  userId Int
+  user   user @relation("feed_post_author", fields: [userId], references: [id])
+
+  likes    feed_like[]
+  comments feed_comment[]
+  shares   feed_share[]
+}
+
+// =====================================
+// FeedLike = ไลค์โพสต์
+// =====================================
+model feed_like {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  feedPostId Int
+  feedPost   feed_post @relation(fields: [feedPostId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   user @relation("feed_like_user", fields: [userId], references: [id])
+
+  @@unique([feedPostId, userId])
+}
+
+// =====================================
+// FeedComment = ความคิดเห็นในโพสต์ (nested reply ได้)
+// =====================================
+model feed_comment {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  imageUrl  String?  @db.Text
+  createdAt DateTime @default(now())
+
+  feedPostId Int
+  feedPost   feed_post @relation(fields: [feedPostId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   user @relation("feed_comment_user", fields: [userId], references: [id])
+
+  // nested reply
+  parentId Int?
+  parent   feed_comment?  @relation("comment_replies", fields: [parentId], references: [id])
+  replies  feed_comment[] @relation("comment_replies")
+
+  likes feed_comment_like[]
+}
+
+// =====================================
+// FeedCommentLike = ไลค์ความคิดเห็น
+// =====================================
+model feed_comment_like {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  feedCommentId Int
+  feedComment   feed_comment @relation(fields: [feedCommentId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   user @relation("feed_comment_like_user", fields: [userId], references: [id])
+
+  @@unique([feedCommentId, userId])
+}
+
+// =====================================
+// FeedShare = แชร์โพสต์
+// =====================================
+model feed_share {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  feedPostId Int
+  feedPost   feed_post @relation(fields: [feedPostId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   user @relation("feed_share_user", fields: [userId], references: [id])
+}
+
+// =====================================
+// ProcurementItem = รายการจัดซื้อ/จัดจ้าง
+// =====================================
+model procurement_item {
+  id Int @id @default(autoincrement())
+
+  materialName  String // ชื่อรายการ/วัสดุ/อุปกรณ์
+  specification String?  @db.Text // รายละเอียด spec
+  partType      String?  @default("OTHER") // EXT / INT / OTHER
+  materialGroup String?  @default("GENERAL") // MAIN / GENERAL / MACHINERY / OTHER
+  unit          String? // หน่วย เช่น m², m, pcs, kg
+  quantity      Decimal? @db.Decimal(12, 2) // จำนวน
+  status        String   @default("PENDING") // PENDING / PURCHASING / DELIVERING / ARRIVED / LOW_STOCK / OUT_OF_STOCK
+
+  expectedDate    DateTime? // วันที่คาดว่าของจะเข้า
+  leadTimeDays    Int? // ระยะเวลานำส่ง (วัน)
+  alertEnabled    Boolean   @default(false) // เปิด/ปิดแจ้งเตือน
+  alertDaysBefore Int?      @default(3) // แจ้งเตือนก่อนกี่วัน
+
+  // AI estimated prices (3 ระดับ)
+  aiEstimateMin Decimal? @db.Decimal(12, 2) // ราคาประหยัด
+  aiEstimateMid Decimal? @db.Decimal(12, 2) // ราคากลาง
+  aiEstimateMax Decimal? @db.Decimal(12, 2) // ราคา premium
+
+  note      String?  @db.Text
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ---------- relations ----------
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  projectId Int
+  project   project @relation(fields: [projectId], references: [id])
+
+  createdById Int
+  creator     user @relation("procurement_item_creator", fields: [createdById], references: [id])
+
+  images    procurement_item_image[]
+  quotes    procurement_supplier_quote[]
+  taskLinks procurement_task_link[]
+  histories procurement_history[]
+  poItems   purchase_order_item[]
+}
+
+// =====================================
+// ProcurementItemImage = รูปอ้างอิงวัสดุ (หลายรูปต่อ 1 รายการ)
+// =====================================
+model procurement_item_image {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String // URL รูป
+  caption   String? // คำอธิบายรูป
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  // ---------- relations ----------
+  procurementItemId Int
+  procurementItem   procurement_item @relation(fields: [procurementItemId], references: [id], onDelete: Cascade)
+}
+
+// =====================================
+// ProcurementSupplierQuote = ราคาจาก Supplier (1 รายการ : หลาย Supplier)
+// =====================================
+model procurement_supplier_quote {
+  id         Int       @id @default(autoincrement())
+  unitPrice  Decimal?  @db.Decimal(12, 2) // ราคาต่อหน่วย
+  totalPrice Decimal?  @db.Decimal(12, 2) // ราคารวม
+  quoteDate  DateTime? // วันที่เสนอราคา
+  validUntil DateTime? // ใบเสนอราคาหมดอายุ
+  note       String?   @db.Text
+  fileUrl    String? // แนบใบเสนอราคา (PDF/รูป)
+  isSelected Boolean   @default(false) // เลือกใช้ Supplier นี้หรือยัง
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // ---------- relations ----------
+  procurementItemId Int
+  procurementItem   procurement_item @relation(fields: [procurementItemId], references: [id], onDelete: Cascade)
+
+  supplierId Int
+  supplier   supplier @relation(fields: [supplierId], references: [id])
+}
+
+// =====================================
+// ProcurementTaskLink = ผูกวัสดุ ↔ Task (M:N)
+// =====================================
+model procurement_task_link {
+  id           Int       @id @default(autoincrement())
+  linkedBy     String    @default("MANUAL") // MANUAL / AI_SUGGESTED
+  aiConfidence Float? // 0.0–1.0 (ถ้า AI แนะนำ)
+  confirmedAt  DateTime? // วันที่ยืนยัน (null = ยังไม่ยืนยัน)
+  createdAt    DateTime  @default(now())
+
+  // ---------- relations ----------
+  procurementItemId Int
+  procurementItem   procurement_item @relation(fields: [procurementItemId], references: [id], onDelete: Cascade)
+
+  taskId Int
+  task   task @relation(fields: [taskId], references: [id])
+
+  confirmedByUserId Int?
+  confirmedByUser   user? @relation("procurement_task_confirmer", fields: [confirmedByUserId], references: [id])
+
+  @@unique([procurementItemId, taskId])
+}
+
+// =====================================
+// ProcurementHistory = Audit log การเปลี่ยนแปลง
+// =====================================
+model procurement_history {
+  id        Int      @id @default(autoincrement())
+  action    String // CREATED / STATUS_CHANGED / PRICE_UPDATED / SUPPLIER_CHANGED / QUANTITY_CHANGED / etc.
+  oldValue  String?  @db.Text // JSON string ค่าเดิม
+  newValue  String?  @db.Text // JSON string ค่าใหม่
+  changedAt DateTime @default(now())
+
+  // ---------- relations ----------
+  procurementItemId Int
+  procurementItem   procurement_item @relation(fields: [procurementItemId], references: [id], onDelete: Cascade)
+
+  changedByUserId Int
+  changedByUser   user @relation("procurement_history_user", fields: [changedByUserId], references: [id])
+}
+
+// =====================================
+// PurchaseOrder = ใบสั่งซื้อ (PO)
+// =====================================
+model purchase_order {
+  id          Int      @id @default(autoincrement())
+  poNumber    String   @unique // เลขที่ PO อัตโนมัติ (เช่น PO-2026-001)
+  status      String   @default("DRAFT") // DRAFT / APPROVED / SENT / RECEIVED / CANCELLED
+  totalAmount Decimal? @db.Decimal(14, 2) // ยอดรวม
+  note        String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // ---------- relations ----------
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  projectId Int
+  project   project @relation(fields: [projectId], references: [id])
+
+  supplierId Int
+  supplier   supplier @relation(fields: [supplierId], references: [id])
+
+  createdById Int
+  creator     user @relation("purchase_order_creator", fields: [createdById], references: [id])
+
+  items purchase_order_item[]
+}
+
+// =====================================
+// PurchaseOrderItem = รายการใน PO
+// =====================================
+model purchase_order_item {
+  id         Int      @id @default(autoincrement())
+  quantity   Decimal? @db.Decimal(12, 2)
+  unitPrice  Decimal? @db.Decimal(12, 2)
+  totalPrice Decimal? @db.Decimal(14, 2)
+
+  // ---------- relations ----------
+  purchaseOrderId Int
+  purchaseOrder   purchase_order @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  procurementItemId Int
+  procurementItem   procurement_item @relation(fields: [procurementItemId], references: [id])
+}
+
+// =====================================
+// Notification = แจ้งเตือน
+// =====================================
+// =====================================
+// Story = สตอรี่วิดีโอ (หมดอายุ 24 ชม.)
+// =====================================
+model story {
+  id           Int      @id @default(autoincrement())
+  videoUrl     String   @db.Text // URL วิดีโอบน S3
+  thumbnailUrl String?  @db.Text // URL thumbnail
+  caption      String?  @db.Text // แคปชัน (ผู้ใช้กรอกเอง หรือ AI เติมจาก transcript)
+  transcript   String?  @db.Text // ข้อความที่ AI ถอดจากเสียง (Speech-to-Text)
+  duration     Int? // ความยาววิดีโอ (วินาที)
+  isProcessing Boolean  @default(true) // AI กำลังถอดเสียงอยู่หรือเปล่า
+  expiresAt    DateTime // เวลาหมดอายุ (createdAt + 24hr)
+  createdAt    DateTime @default(now())
+
+  // ---------- relations ----------
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  projectId Int
+  project   project @relation(fields: [projectId], references: [id])
+
+  userId Int
+  user   user @relation("story_author", fields: [userId], references: [id])
+
+  views story_view[]
+
+  @@index([projectId, organizationId, expiresAt])
+}
+
+// =====================================
+// StoryView = บันทึกว่าใครดู Story ไปแล้ว
+// =====================================
+model story_view {
+  id       Int      @id @default(autoincrement())
+  viewedAt DateTime @default(now())
+
+  storyId Int
+  story   story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   user @relation("story_viewer", fields: [userId], references: [id])
+
+  organizationId Int
+  organization   organization @relation("org_story_views", fields: [organizationId], references: [id])
+
+  @@unique([storyId, userId])
+}
+
+model notification {
+  id        Int      @id @default(autoincrement())
+  type      String // MATERIAL_LATE / MATERIAL_ARRIVED / TASK_NOT_READY / PO_APPROVED / etc.
+  title     String
+  message   String?  @db.Text
+  linkUrl   String? // ลิงก์ไปหน้าที่เกี่ยวข้อง
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // ---------- relations ----------
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  userId Int
+  user   user @relation("notification_user", fields: [userId], references: [id])
+}
+
+model camera {
+  id             Int      @id @default(autoincrement())
+  cameraName     String
+  cameraSN       String
+  cameraLocation String?
+  status         String
+  changedAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  projectId Int
+  project   project @relation(fields: [projectId], references: [id])
+
+  userId          Int
+  user            user               @relation(fields: [userId], references: [id])
+  cameraAnalytics camera_analytics[]
+}
+
+// ==========================================
+// 1. ตารางเก็บข้อมูลแปลนพื้น (Floor Plan)
+// ==========================================
+model floorplan {
+  id        Int      @id @default(autoincrement())
+  name      String // ชื่อแปลน เช่น "แปลนชั้น 1 โซน A"
+  imageUrl  String // URL รูปภาพแปลน
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  projectId Int
+  project   project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   user @relation(fields: [userId], references: [id])
+
+  points point360[]
+}
+
+// ==========================================
+// 2. ตารางเก็บข้อมูลจุดปักหมุด 360 องศา (Point 360)
+// ==========================================
+model point360 {
+  id        Int      @id @default(autoincrement())
+  title     String // ชื่อจุด เช่น "โถงทางเข้าหลัก"
+  location  String? // รายละเอียด/ตำแหน่ง เช่น "โซน A"
+  x         Float // พิกัดแกน X บนรูปแปลน (เก็บเป็น % เช่น 35.5)
+  y         Float // พิกัดแกน Y บนรูปแปลน (เก็บเป็น % เช่น 60.2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 🌟 [ความสัมพันธ์หลัก] จุดนี้อยู่บนแปลนพื้นไหน
+  floorPlanId Int
+  floorPlan   floorplan @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
+
+  // 🌟 [เพิ่มใหม่] เพื่อระบุว่าจุดนี้เป็นของใคร ง่ายต่อการ Filter และเช็คสิทธิ์
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  projectId Int
+  project   project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   user @relation(fields: [userId], references: [id])
+
+  histories point360history[]
+}
+
+model point360history {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String
+  pointId   Int
+  point     point360 @relation(fields: [pointId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+// =====================================
+// ProcurementSuggestion = รายการจาก AI ที่ถูก add ไปที่แทปจัดซื้อ
+// =====================================
+model procurement_suggestion {
+  id            Int      @id @default(autoincrement())
+  materialName  String
+  specification String?  @db.Text
+  quantity      String?
+  unit          String?
+  unitPrice     Decimal? @db.Decimal(12, 2)
+  totalPrice    Decimal? @db.Decimal(12, 2)
+  status        String   @default("PENDING") // PENDING / ADDED
+  createdAt     DateTime @default(now())
+
+  taskId         Int
+  task           task         @relation(fields: [taskId], references: [id])
+  projectId      Int
+  project        project      @relation(fields: [projectId], references: [id])
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+  createdById    Int
+  creator        user         @relation("procurement_suggestion_creator", fields: [createdById], references: [id])
+}
+
+model camera_analytics {
+  id          Int      @id @default(autoincrement())
+  cameraId    Int
+  personCount Int
+  createdAt   DateTime @default(now())
+
+  camera camera @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+}
+
+// =====================================
+// TaskActualCost = บันทึกงบประมาณจริง (ต่อ Task)
+// - category: MATERIAL / LABOR / EQUIPMENT / OTHER
+// =====================================
+model task_actual_cost {
+  id          Int      @id @default(autoincrement())
+  category    String   // MATERIAL / LABOR / EQUIPMENT / OTHER
+  amount      Decimal  @db.Decimal(14, 2)
+  description String?  @db.Text
+  imageUrl    String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  // ---------- relations ----------
+  taskId         Int
+  task           task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  organizationId Int
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  createdById    Int
+  creator        user         @relation("actual_cost_creator", fields: [createdById], references: [id])
+
+  @@index([taskId])
+}
+
+model project_clone_progress {
+  id        Int      @id @default(autoincrement())
+  progress  Int      @default(0)
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+
+  projectId Int
+}
