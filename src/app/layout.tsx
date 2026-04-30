@@ -9,6 +9,9 @@ import {
 import { ToastContainer } from "react-toastify";
 import { auth } from "@/auth";
 import IdleTimeoutHandler from "@/components/IdleTimeoutHandler";
+import ThemeColorProvider from "@/components/Providers/ThemeColorProvider";
+import { getOrgSetting } from "@/lib/actions/actionOrgSetting";
+import { SETTING_KEYS } from "@/lib/settingKeys";
 
 const fontSans = IBM_Plex_Sans_Thai({
   subsets: ["thai", "latin"],
@@ -41,6 +44,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+  const primaryColor = await getOrgSetting(SETTING_KEYS.ORG_PRIMARY_COLOR) || "blue";
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${fontSans.variable}  font-sans antialiased`}>
@@ -50,7 +54,9 @@ export default async function RootLayout({
           refetchOnWindowFocus={false}
         >
           <IdleTimeoutHandler />
-          <Providers>{children}</Providers>
+          <ThemeColorProvider colorKey={primaryColor}>
+            <Providers>{children}</Providers>
+          </ThemeColorProvider>
           <ToastContainer
             position="top-right"
             autoClose={5000}

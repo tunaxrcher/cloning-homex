@@ -176,6 +176,11 @@ async function main() {
         settingKey: "ORG_TAGLINE",
         settingValue: "Smart Work",
       },
+      {
+        organizationId: org.id,
+        settingKey: "ORG_PRIMARY_COLOR",
+        settingValue: "blue",
+      },
     ],
   });
   console.log(`  ✅ Organization settings seeded`);

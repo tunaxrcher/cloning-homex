@@ -242,6 +242,7 @@ export default function MainPageSetting({
               initialLogoUrl={aiSettings[SETTING_KEYS.ORG_LOGO_URL] || ""}
               initialWelcomeText={aiSettings[SETTING_KEYS.ORG_WELCOME_TEXT] || ""}
               initialTagline={aiSettings[SETTING_KEYS.ORG_TAGLINE] || ""}
+              initialPrimaryColor={aiSettings[SETTING_KEYS.ORG_PRIMARY_COLOR] || ""}
             />
           </div>
         </Tab>

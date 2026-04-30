@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { Button, Input, Card, CardBody, CardHeader, Chip, Divider } from "@heroui/react";
-import { Palette, Save, RotateCcw, Upload, X } from "lucide-react";
+import { Palette, Save, RotateCcw, Upload, X, Check } from "lucide-react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -10,12 +10,14 @@ import Image from "next/image";
 import { upsertOrgSetting } from "@/lib/actions/actionOrgSetting";
 import { uploadImageFormData } from "@/lib/actions/actionIndex";
 import { SETTING_KEYS } from "@/lib/settingKeys";
+import { COLOR_PRESETS, DEFAULT_COLOR_KEY } from "@/lib/themePresets";
 
 const DEFAULTS = {
   orgName: "HOMEX",
   welcomeText: "Welcome to HomeX",
   tagline: "Smart Work",
   logoUrl: "/logo.png",
+  primaryColor: DEFAULT_COLOR_KEY,
 };
 
 interface BrandingSettingProps {
@@ -23,6 +25,7 @@ interface BrandingSettingProps {
   initialLogoUrl: string;
   initialWelcomeText: string;
   initialTagline: string;
+  initialPrimaryColor: string;
 }
 
 export default function BrandingSetting({
@@ -30,6 +33,7 @@ export default function BrandingSetting({
   initialLogoUrl,
   initialWelcomeText,
   initialTagline,
+  initialPrimaryColor,
 }: BrandingSettingProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +42,7 @@ export default function BrandingSetting({
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl || DEFAULTS.logoUrl);
   const [welcomeText, setWelcomeText] = useState(initialWelcomeText || DEFAULTS.welcomeText);
   const [tagline, setTagline] = useState(initialTagline || DEFAULTS.tagline);
+  const [primaryColor, setPrimaryColor] = useState(initialPrimaryColor || DEFAULTS.primaryColor);
 
   const [isSaving, startSaving] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
@@ -96,6 +101,7 @@ export default function BrandingSetting({
         upsertOrgSetting(SETTING_KEYS.ORG_LOGO_URL, logoUrl.trim()),
         upsertOrgSetting(SETTING_KEYS.ORG_WELCOME_TEXT, welcomeText.trim()),
         upsertOrgSetting(SETTING_KEYS.ORG_TAGLINE, tagline.trim()),
+        upsertOrgSetting(SETTING_KEYS.ORG_PRIMARY_COLOR, primaryColor),
       ]);
       if (results.every((r) => r.success)) {
         toast.success("บันทึก Branding สำเร็จ");
@@ -114,6 +120,7 @@ export default function BrandingSetting({
     setLogoUrl(DEFAULTS.logoUrl);
     setWelcomeText(DEFAULTS.welcomeText);
     setTagline(DEFAULTS.tagline);
+    setPrimaryColor(DEFAULTS.primaryColor);
     setLogoPreview(null);
   };
 
@@ -216,6 +223,36 @@ export default function BrandingSetting({
               placeholder="เช่น Smart Work"
               description="ข้อความรองใต้หัวข้อหน้า Login"
             />
+          </div>
+        </div>
+
+        <Divider />
+
+        {/* PRIMARY COLOR */}
+        <div className="space-y-3">
+          <label className="text-sm font-medium">
+            สีหลัก (Primary Color)
+            <span className="text-default-400 ml-1">ใช้กับปุ่ม, แท็บ, ลิงก์ทั้งระบบ</span>
+          </label>
+          <div className="flex flex-wrap gap-3">
+            {COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                onClick={() => setPrimaryColor(preset.key)}
+                className={`relative w-10 h-10 rounded-full border-2 transition-all ${
+                  primaryColor === preset.key
+                    ? "border-foreground scale-110 shadow-lg"
+                    : "border-transparent hover:scale-105"
+                }`}
+                style={{ backgroundColor: preset.hex }}
+                title={preset.label}
+              >
+                {primaryColor === preset.key && (
+                  <Check size={16} className="absolute inset-0 m-auto text-white" />
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
