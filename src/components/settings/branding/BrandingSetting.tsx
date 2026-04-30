@@ -188,7 +188,7 @@ export default function BrandingSetting({
           </div>
 
           {/* RIGHT: Text fields */}
-          <div className="space-y-4">
+          <div className="flex flex-col gap-2">
             <Input
               label="ชื่อองค์กร"
               labelPlacement="outside"

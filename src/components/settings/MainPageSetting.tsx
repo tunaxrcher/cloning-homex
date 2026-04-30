@@ -236,7 +236,7 @@ export default function MainPageSetting({
             </div>
           }
         >
-          <div className="max-w-4xl pt-6">
+          <div className="max-w-full">
             <BrandingSetting
               initialOrgName={aiSettings[SETTING_KEYS.ORG_NAME] || ""}
               initialLogoUrl={aiSettings[SETTING_KEYS.ORG_LOGO_URL] || ""}
@@ -255,7 +255,7 @@ export default function MainPageSetting({
             </div>
           }
         >
-          <div className="max-w-4xl pt-6">
+          <div className="max-w-full pt-6">
             <AiPromptSetting
               initialRolePrompt={aiSettings[SETTING_KEYS.AI_TASK_ROLE_PROMPT] || ""}
               initialPlaceholder={aiSettings[SETTING_KEYS.TASK_PLACEHOLDER] || ""}

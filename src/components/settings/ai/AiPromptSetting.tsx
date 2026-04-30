@@ -154,53 +154,8 @@ export default function AiPromptSetting({
       </CardHeader>
 
       <CardBody className="px-6 pb-6 space-y-6">
-        {/* ROLE PROMPT */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            AI Role Prompt
-            <span className="text-default-400 ml-1">(บทบาท/บริบทธุรกิจของ AI)</span>
-          </label>
-          <Textarea
-            value={rolePrompt}
-            onValueChange={setRolePrompt}
-            variant="bordered"
-            minRows={4}
-            maxRows={10}
-            placeholder="เช่น คุณคือ AI ผู้เชี่ยวชาญด้านการซ่อมรถยนต์..."
-            description="AI จะใช้บทบาทนี้ในการวิเคราะห์ Task ทุกครั้งที่สร้าง เช่น ประเมินราคา ระยะเวลา วัสดุ ความเสี่ยง"
-          />
-        </div>
 
-        {/* TASK PLACEHOLDER */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">
-              Task Name Placeholder
-              <span className="text-default-400 ml-1">(ตัวอย่างชื่องาน)</span>
-            </label>
-            <Button
-              size="sm"
-              variant="flat"
-              color="secondary"
-              startContent={<Sparkles size={14} />}
-              onPress={handleGenPlaceholder}
-              isLoading={isGenerating}
-            >
-              AI สร้างให้
-            </Button>
-          </div>
-          <Textarea
-            value={placeholder}
-            onValueChange={setPlaceholder}
-            variant="bordered"
-            minRows={1}
-            maxRows={3}
-            placeholder="เช่น เปลี่ยนผ้าเบรก, ซ่อมเกียร์"
-            description="แสดงเป็นตัวอย่างในช่องกรอกชื่อ Task ตอนสร้างงานใหม่"
-          />
-        </div>
-
-        {/* FULL PROMPT PREVIEW */}
+                {/* FULL PROMPT PREVIEW */}
         <Accordion variant="bordered" className="px-0">
           <AccordionItem
             key="preview"
@@ -208,7 +163,7 @@ export default function AiPromptSetting({
             title={
               <div className="flex items-center gap-2">
                 <Eye size={16} className="text-violet-500" />
-                <span className="text-sm font-medium">Preview Prompt ที่จะส่งให้ AI (Real-time)</span>
+                <span className="text-sm font-medium">Preview Prompt ที่จะส่งให้ AI ตอนสร้าง Task</span>
               </div>
             }
           >
@@ -241,6 +196,56 @@ export default function AiPromptSetting({
             </div>
           </AccordionItem>
         </Accordion>
+
+
+        {/* ROLE PROMPT */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            AI Role Prompt
+            <span className="text-default-400 ml-1">(บทบาท/บริบทธุรกิจของ AI)</span>
+          </label>
+          <Textarea
+            value={rolePrompt}
+            onValueChange={setRolePrompt}
+            variant="bordered"
+            minRows={4}
+            maxRows={10}
+            placeholder="เช่น คุณคือ AI ผู้เชี่ยวชาญด้านการซ่อมรถยนต์..."
+            description="AI จะใช้บทบาทนี้ในการวิเคราะห์ Task ทุกครั้งที่สร้าง เช่น ประเมินราคา ระยะเวลา วัสดุ ความเสี่ยง"
+          />
+        </div>
+
+            <hr />
+        {/* TASK PLACEHOLDER */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">
+              Task Name Placeholder
+              <span className="text-default-400 ml-1">(ตัวอย่างชื่องาน)</span>
+            </label>
+            <Button
+              size="sm"
+              variant="flat"
+              color="secondary"
+              startContent={<Sparkles size={14} />}
+              onPress={handleGenPlaceholder}
+              isLoading={isGenerating}
+            >
+              AI สร้างให้
+            </Button>
+          </div>
+          <Textarea
+            value={placeholder}
+            onValueChange={setPlaceholder}
+            variant="bordered"
+            minRows={1}
+            maxRows={3}
+            placeholder="เช่น เปลี่ยนผ้าเบรก, ซ่อมเกียร์"
+            description="แสดงเป็นตัวอย่างในช่องกรอกชื่อ Task ตอนสร้างงานใหม่"
+          />
+        </div>
+
+
 
         {/* ACTIONS */}
         <div className="flex justify-end gap-3 pt-2">
