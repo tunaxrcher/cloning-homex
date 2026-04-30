@@ -49,12 +49,17 @@ const CreateTaskV2Modal = ({
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
   const [isPending, startTransition] = useTransition();
   const [taskPlaceholder, setTaskPlaceholder] = useState("เช่น งานติดตั้ง, งานซ่อมแซม, งานตรวจสอบ");
+  const [orgLogoUrl, setOrgLogoUrl] = useState("/logo.png");
 
   useEffect(() => {
+    if (!isOpen) return;
     getOrgSetting(SETTING_KEYS.TASK_PLACEHOLDER).then((val) => {
       if (val) setTaskPlaceholder(val);
     });
-  }, []);
+    getOrgSetting(SETTING_KEYS.ORG_LOGO_URL).then((val) => {
+      if (val) setOrgLogoUrl(val);
+    });
+  }, [isOpen]);
 
   const handleAiImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -232,7 +237,7 @@ const CreateTaskV2Modal = ({
             <ModalHeader className="flex flex-col items-center gap-4 pb-4">
               <div className="flex justify-center">
                 <Image
-                  src="/logo.png"
+                  src={orgLogoUrl}
                   alt="HomeX"
                   width={120}
                   height={40}
