@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Textarea, Card, CardBody, CardHeader, Chip, Accordion, AccordionItem } from "@heroui/react";
+import { Button, Textarea, Card, CardBody, CardHeader, Chip, Accordion, AccordionItem, Divider } from "@heroui/react";
 import { Bot, Sparkles, RotateCcw, Save, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -154,16 +154,15 @@ export default function AiPromptSetting({
       </CardHeader>
 
       <CardBody className="px-6 pb-6 space-y-6">
-
-                {/* FULL PROMPT PREVIEW */}
-        <Accordion variant="bordered" className="px-0">
+        {/* FULL PROMPT PREVIEW */}
+        <Accordion variant="bordered">
           <AccordionItem
             key="preview"
             aria-label="Preview Full Prompt"
             title={
               <div className="flex items-center gap-2">
-                <Eye size={16} className="text-violet-500" />
-                <span className="text-sm font-medium">Preview Prompt ที่จะส่งให้ AI ตอนสร้าง Task</span>
+                <Eye size={16} className="text-violet-500 shrink-0" />
+                <span className="text-sm font-medium">Preview Prompt (กดเพื่อดู)</span>
               </div>
             }
           >
@@ -199,7 +198,7 @@ export default function AiPromptSetting({
 
 
         {/* ROLE PROMPT */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <label className="text-sm font-medium">
             AI Role Prompt
             <span className="text-default-400 ml-1">(บทบาท/บริบทธุรกิจของ AI)</span>
@@ -215,9 +214,9 @@ export default function AiPromptSetting({
           />
         </div>
 
-            <hr />
+        <Divider />
         {/* TASK PLACEHOLDER */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">
               Task Name Placeholder

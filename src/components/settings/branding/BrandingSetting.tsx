@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { Button, Input, Card, CardBody, CardHeader, Chip } from "@heroui/react";
+import { Button, Input, Card, CardBody, CardHeader, Chip, Divider } from "@heroui/react";
 import { Palette, Save, RotateCcw, Upload, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -218,6 +218,8 @@ export default function BrandingSetting({
             />
           </div>
         </div>
+
+        <Divider />
 
         {/* PREVIEW */}
         <div className="space-y-2">
