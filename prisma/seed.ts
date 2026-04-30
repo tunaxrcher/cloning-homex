@@ -156,9 +156,29 @@ async function main() {
         settingKey: "TASK_PLACEHOLDER",
         settingValue: "เช่น งานติดตั้ง, งานซ่อมแซม, งานตรวจสอบ",
       },
+      {
+        organizationId: org.id,
+        settingKey: "ORG_NAME",
+        settingValue: "HOMEX",
+      },
+      {
+        organizationId: org.id,
+        settingKey: "ORG_LOGO_URL",
+        settingValue: "/logo.png",
+      },
+      {
+        organizationId: org.id,
+        settingKey: "ORG_WELCOME_TEXT",
+        settingValue: "Welcome to HomeX",
+      },
+      {
+        organizationId: org.id,
+        settingKey: "ORG_TAGLINE",
+        settingValue: "Smart Work",
+      },
     ],
   });
-  console.log(`  ✅ Organization settings: AI_TASK_ROLE_PROMPT, TASK_PLACEHOLDER`);
+  console.log(`  ✅ Organization settings seeded`);
 
   console.log("\n🎉 Seed completed!");
   console.log("📌 Login: spadmin / Homex@1234");

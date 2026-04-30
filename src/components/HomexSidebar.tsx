@@ -18,7 +18,9 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import { useSession } from "next-auth/react";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { getOrgSetting } from "@/lib/actions/actionOrgSetting";
+import { SETTING_KEYS } from "@/lib/settingKeys";
 
 export const HomexSidebar = ({
   isOpenSideBar,
@@ -28,6 +30,19 @@ export const HomexSidebar = ({
   const pathname = usePathname();
   const { data: session } = useSession();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+
+  const [orgName, setOrgName] = useState("HOMEX");
+  const [orgLogo, setOrgLogo] = useState("/logo.png");
+
+  useEffect(() => {
+    Promise.all([
+      getOrgSetting(SETTING_KEYS.ORG_NAME),
+      getOrgSetting(SETTING_KEYS.ORG_LOGO_URL),
+    ]).then(([name, logo]) => {
+      if (name) setOrgName(name);
+      if (logo) setOrgLogo(logo);
+    });
+  }, []);
 
   const allowedMenuItems = useMemo(() => {
     if (status === "loading") return [];
@@ -63,8 +78,8 @@ export const HomexSidebar = ({
           <div className={`${isCollapsed ? "hidden md:block" : "block"}`}>
             {isCollapsed ? (
               <Image
-                src="/logo.png"
-                alt="HOMEX Logo"
+                src={orgLogo}
+                alt={`${orgName} Logo`}
                 width={40}
                 height={40}
                 className="rounded-full object-cover dark:invert font-sans"
@@ -72,14 +87,14 @@ export const HomexSidebar = ({
             ) : (
               <div className="flex items-center gap-3">
                 <Image
-                  src="/logo.png"
-                  alt="HOMEX Logo"
+                  src={orgLogo}
+                  alt={`${orgName} Logo`}
                   width={32}
                   height={32}
                   className="rounded-full object-cover dark:invert "
                 />
                 <span className="text-xl font-bold bg-gradient-to-tr from-slate-200 to-slate-500 text-transparent bg-clip-text tracking-wide">
-                  HOMEX
+                  {orgName}
                 </span>
               </div>
             )}
@@ -89,14 +104,14 @@ export const HomexSidebar = ({
             className={`flex items-center gap-3 md:hidden ${isCollapsed ? "block" : "hidden"}`}
           >
             <Image
-              src="/logo.png"
-              alt="HOMEX Logo"
+              src={orgLogo}
+              alt={`${orgName} Logo`}
               width={32}
               height={32}
               className="rounded-full object-cover dark:invert "
             />
             <span className="text-xl font-bold bg-gradient-to-tr from-slate-200 to-slate-500 text-transparent bg-clip-text tracking-wide">
-              HOMEX
+              {orgName}
             </span>
           </div>
 

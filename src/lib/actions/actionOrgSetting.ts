@@ -51,6 +51,25 @@ export async function getOrgSettings(
 }
 
 /* ====================================================== */
+/* GET PUBLIC BRANDING (no auth — for login page)          */
+/* ====================================================== */
+export async function getPublicBranding(): Promise<Record<string, string>> {
+  const org = await prisma.organization.findFirst({ orderBy: { id: "asc" } });
+  if (!org) return {};
+
+  const keys = ["ORG_NAME", "ORG_LOGO_URL", "ORG_WELCOME_TEXT", "ORG_TAGLINE"];
+  const settings = await prisma.organization_setting.findMany({
+    where: { organizationId: org.id, settingKey: { in: keys } },
+  });
+
+  const result: Record<string, string> = {};
+  for (const s of settings) {
+    result[s.settingKey] = s.settingValue;
+  }
+  return result;
+}
+
+/* ====================================================== */
 /* UPSERT SETTING                                          */
 /* ====================================================== */
 export async function upsertOrgSetting(

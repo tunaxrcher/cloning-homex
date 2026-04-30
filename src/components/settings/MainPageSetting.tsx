@@ -27,6 +27,7 @@ import ContractorTable from "./contractor/ContractorTable";
 import CreateContractor from "./contractor/forms/createContractor";
 
 import AiPromptSetting from "./ai/AiPromptSetting";
+import BrandingSetting from "./branding/BrandingSetting";
 import { SETTING_KEYS } from "@/lib/settingKeys";
 
 import {
@@ -215,6 +216,14 @@ export default function MainPageSetting({
             setContractorOpen(true);
           }}
           onToggle={(c) => handleToggle("contractor", c)}
+        />
+
+        {/* BRANDING SETTING */}
+        <BrandingSetting
+          initialOrgName={aiSettings[SETTING_KEYS.ORG_NAME] || ""}
+          initialLogoUrl={aiSettings[SETTING_KEYS.ORG_LOGO_URL] || ""}
+          initialWelcomeText={aiSettings[SETTING_KEYS.ORG_WELCOME_TEXT] || ""}
+          initialTagline={aiSettings[SETTING_KEYS.ORG_TAGLINE] || ""}
         />
 
         {/* AI PROMPT SETTING */}

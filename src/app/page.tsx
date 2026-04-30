@@ -4,8 +4,15 @@ import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
+import { getPublicBranding } from "@/lib/actions/actionOrgSetting";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const branding = await getPublicBranding();
+
+  const logoUrl = branding.ORG_LOGO_URL || "/logo.png";
+  const welcomeText = branding.ORG_WELCOME_TEXT || "Welcome to HomeX";
+  const tagline = branding.ORG_TAGLINE || "Smart Work";
+
   return (
     <Suspense
       fallback={
@@ -23,8 +30,8 @@ export default function LoginPage() {
           <Link href="/">
             <Image
               className="rounded-xl dark:invert"
-              src="/logo.png"
-              alt="homex logo"
+              src={logoUrl}
+              alt="logo"
               width={120}
               height={24}
               priority
@@ -33,10 +40,10 @@ export default function LoginPage() {
 
           <div className="text-center">
             <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
-              Welcome to HomeX
+              {welcomeText}
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
-              Smart Work
+              {tagline}
             </p>
           </div>
 
