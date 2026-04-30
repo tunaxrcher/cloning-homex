@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getPublicBranding } from "@/lib/actions/actionOrgSetting";
 import "./globals.css";
 import { Providers } from "../components/Providers/providers";
 import { SessionProvider } from "next-auth/react";
@@ -20,23 +21,23 @@ const fontSans = IBM_Plex_Sans_Thai({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "HomeX",
-  description: "Project Management System",
-  icons: {
-    icon: [
-      {
-        url: "/logo.png",
-        href: "/logo.png",
-      },
-    ],
-    apple: [
-      {
-        url: "/logo.png",
-      },
-    ],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getPublicBranding();
+  const orgName = branding.ORG_NAME || "HomeX";
+  const logoUrl = branding.ORG_LOGO_URL || "/logo.png";
+
+  return {
+    title: {
+      default: orgName,
+      template: `%s | ${orgName}`,
+    },
+    description: "Project Management System",
+    icons: {
+      icon: [{ url: logoUrl, href: logoUrl }],
+      apple: [{ url: logoUrl }],
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
