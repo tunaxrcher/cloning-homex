@@ -231,8 +231,7 @@ export default function BrandingSetting({
         {/* PRIMARY COLOR */}
         <div className="space-y-3">
           <label className="text-sm font-medium">
-            สีหลัก (Primary Color)
-            <span className="text-default-400 ml-1">ใช้กับปุ่ม, แท็บ, ลิงก์ทั้งระบบ</span>
+            Theme Color
           </label>
           <div className="flex flex-wrap gap-3">
             {COLOR_PRESETS.map((preset) => (
