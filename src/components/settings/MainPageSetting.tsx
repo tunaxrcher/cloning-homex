@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, AlertTriangle } from "lucide-react";
+import { Settings, AlertTriangle, Palette, Bot } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -11,6 +11,8 @@ import {
   ModalBody,
   ModalFooter,
   Button,
+  Tabs,
+  Tab,
 } from "@heroui/react";
 
 import PositionTable from "./position/PositionTable";
@@ -150,15 +152,13 @@ export default function MainPageSetting({
             System Setting
           </h1>
           <p className="text-default-400 text-sm">
-            จัดการตำแหน่งและสิทธิ
+            จัดการการตั้งค่าระบบ
           </p>
         </div>
       </div>
 
       {/* TABLE GRID */}
       <div className="grid xl:grid-cols-2 gap-8">
-
-        {/* POSITION TABLE */}
         <PositionTable
           positions={positions}
           onAdd={() => {
@@ -170,15 +170,12 @@ export default function MainPageSetting({
             setPositionOpen(true);
           }}
           onToggle={(p) => handleToggle("position", p)}
-
-          /* 🔐 OPEN PERMISSION SETTING */
           onPermission={(p) => {
             setPermissionPosition(p);
             setPermissionSettingOpen(true);
           }}
         />
 
-        {/* PERMISSION TABLE */}
         <PermissionTable
           permissions={permissions}
           onAdd={() => {
@@ -217,21 +214,55 @@ export default function MainPageSetting({
           }}
           onToggle={(c) => handleToggle("contractor", c)}
         />
-
-        {/* BRANDING SETTING */}
-        <BrandingSetting
-          initialOrgName={aiSettings[SETTING_KEYS.ORG_NAME] || ""}
-          initialLogoUrl={aiSettings[SETTING_KEYS.ORG_LOGO_URL] || ""}
-          initialWelcomeText={aiSettings[SETTING_KEYS.ORG_WELCOME_TEXT] || ""}
-          initialTagline={aiSettings[SETTING_KEYS.ORG_TAGLINE] || ""}
-        />
-
-        {/* AI PROMPT SETTING */}
-        <AiPromptSetting
-          initialRolePrompt={aiSettings[SETTING_KEYS.AI_TASK_ROLE_PROMPT] || ""}
-          initialPlaceholder={aiSettings[SETTING_KEYS.TASK_PLACEHOLDER] || ""}
-        />
       </div>
+
+      {/* BRANDING & AI TABS */}
+      <Tabs
+        aria-label="Setting Tabs"
+        variant="underlined"
+        color="primary"
+        classNames={{
+          tabList: "gap-6 border-b border-divider",
+          tab: "h-10 px-0",
+          cursor: "bg-primary",
+        }}
+      >
+        <Tab
+          key="branding"
+          title={
+            <div className="flex items-center gap-2">
+              <Palette size={16} />
+              <span>Branding</span>
+            </div>
+          }
+        >
+          <div className="max-w-4xl pt-6">
+            <BrandingSetting
+              initialOrgName={aiSettings[SETTING_KEYS.ORG_NAME] || ""}
+              initialLogoUrl={aiSettings[SETTING_KEYS.ORG_LOGO_URL] || ""}
+              initialWelcomeText={aiSettings[SETTING_KEYS.ORG_WELCOME_TEXT] || ""}
+              initialTagline={aiSettings[SETTING_KEYS.ORG_TAGLINE] || ""}
+            />
+          </div>
+        </Tab>
+
+        <Tab
+          key="ai"
+          title={
+            <div className="flex items-center gap-2">
+              <Bot size={16} />
+              <span>AI Prompt</span>
+            </div>
+          }
+        >
+          <div className="max-w-4xl pt-6">
+            <AiPromptSetting
+              initialRolePrompt={aiSettings[SETTING_KEYS.AI_TASK_ROLE_PROMPT] || ""}
+              initialPlaceholder={aiSettings[SETTING_KEYS.TASK_PLACEHOLDER] || ""}
+            />
+          </div>
+        </Tab>
+      </Tabs>
 
       {/* POSITION FORM */}
       <CreatePosition

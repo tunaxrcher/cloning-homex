@@ -127,9 +127,6 @@ export default function BrandingSetting({
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-semibold">Branding</h3>
-          <p className="text-default-400 text-sm">
-            ตั้งค่าโลโก้ ชื่อองค์กร และข้อความหน้า Login
-          </p>
         </div>
         <Chip size="sm" variant="flat" color="primary">
           Brand
@@ -140,7 +137,6 @@ export default function BrandingSetting({
         <div className="grid sm:grid-cols-2 gap-6">
           {/* LEFT: Logo */}
           <div className="space-y-3">
-            <label className="text-sm font-medium">โลโก้องค์กร</label>
             <div className="flex items-center gap-4">
               <div className="relative w-20 h-20 rounded-xl border-2 border-dashed border-default-300 flex items-center justify-center overflow-hidden bg-default-50">
                 {displayLogo ? (
