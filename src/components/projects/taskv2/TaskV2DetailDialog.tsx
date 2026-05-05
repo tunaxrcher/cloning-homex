@@ -691,6 +691,7 @@ const TaskV2DetailDialog = ({
                       onEditSubtask={onEditSubtask}
                       startActual={task.startActual || null}
                       finishActual={task.finishActual || null}
+                      taskId={task.id}
                       onStartTask={onStartTask}
                       onSubmitTask={onSubmitTask}
                     />

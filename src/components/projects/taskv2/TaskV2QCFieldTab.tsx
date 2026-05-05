@@ -58,6 +58,7 @@ interface TaskV2QCFieldTabProps {
   onEditSubtask: (subtaskId: number, newName: string) => void;
   startActual: string | null;
   finishActual: string | null;
+  taskId: number;
   onStartTask: (startDate: string) => Promise<void>;
   onSubmitTask: (finishDate: string, submitNote?: string, submitImages?: string[]) => Promise<void>;
 }
@@ -238,6 +239,7 @@ const TaskV2QCFieldTab = ({
   onEditSubtask,
   startActual,
   finishActual,
+  taskId,
   onStartTask,
   onSubmitTask,
 }: TaskV2QCFieldTabProps) => {
@@ -343,6 +345,7 @@ const TaskV2QCFieldTab = ({
       for (const file of Array.from(files)) {
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("path", `task-submit/${taskId}`);
         const res = await uploadImageFormData(formData);
         if (res.success && res.url) {
           newUrls.push(res.url);
@@ -668,13 +671,13 @@ const TaskV2QCFieldTab = ({
             <div className="space-y-2">
               <label className="text-xs text-zinc-400">แนบรูปผลงาน (ไม่บังคับ)</label>
               {submitImageUrls.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {submitImageUrls.map((url, i) => (
-                    <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-zinc-700">
+                    <div key={i} className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-700">
                       <img src={url} alt={`ผลงาน ${i + 1}`} className="w-full h-full object-cover" />
                       <button
                         onClick={() => setSubmitImageUrls((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="absolute top-0.5 right-0.5 w-5 h-5 bg-danger-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                        className="absolute top-1 right-1 w-5 h-5 bg-danger-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
                       >
                         <Trash2 size={10} />
                       </button>
@@ -682,9 +685,22 @@ const TaskV2QCFieldTab = ({
                   ))}
                 </div>
               )}
-              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 cursor-pointer transition-colors">
-                <ImagePlus size={16} className="text-zinc-400" />
-                <span className="text-xs text-zinc-300">{isUploading ? "กำลังอัปโหลด..." : "เลือกรูป"}</span>
+              <label className={`flex flex-col items-center justify-center gap-2 w-full py-6 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
+                isUploading
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-zinc-700 hover:border-zinc-500 bg-zinc-900/50 hover:bg-zinc-800/50"
+              }`}>
+                {isUploading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs text-zinc-400">กำลังอัปโหลด...</span>
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus size={24} className="text-zinc-500" />
+                    <span className="text-xs text-zinc-400">กดเพื่อเลือกรูป (เลือกได้หลายรูป)</span>
+                  </>
+                )}
                 <input
                   type="file"
                   accept="image/*"
