@@ -10,6 +10,8 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  Textarea,
+  Divider,
 } from "@heroui/react";
 import {
   GripVertical,
@@ -26,7 +28,11 @@ import {
   Timer,
   AlertCircle,
   ChevronDown,
+  ImagePlus,
+  Trash2,
 } from "lucide-react";
+import { toast } from "react-toastify";
+import { uploadImageFormData } from "@/lib/actions/actionIndex";
 import {
   DndContext,
   closestCenter,
@@ -53,7 +59,7 @@ interface TaskV2QCFieldTabProps {
   startActual: string | null;
   finishActual: string | null;
   onStartTask: (startDate: string) => Promise<void>;
-  onSubmitTask: (finishDate: string) => Promise<void>;
+  onSubmitTask: (finishDate: string, submitNote?: string, submitImages?: string[]) => Promise<void>;
 }
 
 function calcDaysBetween(start: string | Date, end: string | Date): number {
@@ -243,6 +249,9 @@ const TaskV2QCFieldTab = ({
   const [submitDate, setSubmitDate] = useState(toLocalDateString(new Date()));
   const [isLoading, setIsLoading] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [submitNote, setSubmitNote] = useState("");
+  const [submitImageUrls, setSubmitImageUrls] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const isStarted = !!startActual;
   const isFinished = !!finishActual;
@@ -312,12 +321,45 @@ const TaskV2QCFieldTab = ({
   const handleConfirmSubmit = useCallback(async () => {
     setIsLoading(true);
     try {
-      await onSubmitTask(submitDate);
+      await onSubmitTask(
+        submitDate,
+        submitNote || undefined,
+        submitImageUrls.length > 0 ? submitImageUrls : undefined,
+      );
       setShowSubmitDialog(false);
+      setSubmitNote("");
+      setSubmitImageUrls([]);
     } finally {
       setIsLoading(false);
     }
-  }, [submitDate, onSubmitTask]);
+  }, [submitDate, submitNote, submitImageUrls, onSubmitTask]);
+
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    try {
+      const newUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await uploadImageFormData(formData);
+        if (res.success && res.url) {
+          newUrls.push(res.url);
+        } else {
+          toast.error(`อัปโหลด ${file.name} ไม่สำเร็จ`);
+        }
+      }
+      if (newUrls.length > 0) {
+        setSubmitImageUrls((prev) => [...prev, ...newUrls]);
+      }
+    } catch {
+      toast.error("เกิดข้อผิดพลาดในการอัปโหลด");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  }, []);
 
   const sortableIds = checklist.map(
     (item, i) => item.id ?? i
@@ -575,9 +617,18 @@ const TaskV2QCFieldTab = ({
       {/* ─── Submit Task Dialog ─── */}
       <Modal
         isOpen={showSubmitDialog}
-        onOpenChange={(open) => !isLoading && setShowSubmitDialog(open)}
-        size="sm"
+        onOpenChange={(open) => {
+          if (!isLoading && !isUploading) {
+            setShowSubmitDialog(open);
+            if (!open) {
+              setSubmitNote("");
+              setSubmitImageUrls([]);
+            }
+          }
+        }}
+        size="lg"
         placement="center"
+        scrollBehavior="inside"
         classNames={{
           base: "bg-[#1a1b23] text-white",
           closeButton: "text-zinc-400 hover:text-white",
@@ -585,32 +636,74 @@ const TaskV2QCFieldTab = ({
       >
         <ModalContent>
           <ModalHeader className="text-base font-bold">ส่งงาน</ModalHeader>
-          <ModalBody>
-            <p className="text-sm text-zinc-400 mb-2">
-              เลือกวันที่ส่งงาน
-            </p>
-            <input
-              type="date"
-              value={submitDate}
-              onChange={(e) => setSubmitDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none focus:border-primary"
-            />
+          <ModalBody className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-400">วันที่ส่งงาน</label>
+              <input
+                type="date"
+                value={submitDate}
+                onChange={(e) => setSubmitDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none focus:border-primary"
+              />
+            </div>
+
+            <Divider />
+
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-400">หมายเหตุ / ผลงาน (ไม่บังคับ)</label>
+              <Textarea
+                value={submitNote}
+                onValueChange={setSubmitNote}
+                placeholder="เช่น รายละเอียดผลงาน, ลิงก์วิดีโอ YouTube..."
+                minRows={3}
+                maxRows={6}
+                variant="bordered"
+                classNames={{
+                  input: "text-sm text-white",
+                  inputWrapper: "bg-zinc-900 border-zinc-700",
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-zinc-400">แนบรูปผลงาน (ไม่บังคับ)</label>
+              {submitImageUrls.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {submitImageUrls.map((url, i) => (
+                    <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-zinc-700">
+                      <img src={url} alt={`ผลงาน ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => setSubmitImageUrls((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 bg-danger-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 cursor-pointer transition-colors">
+                <ImagePlus size={16} className="text-zinc-400" />
+                <span className="text-xs text-zinc-300">{isUploading ? "กำลังอัปโหลด..." : "เลือกรูป"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </ModalBody>
           <ModalFooter>
-            <Button
-              variant="flat"
-              size="sm"
-              onPress={() => setShowSubmitDialog(false)}
-              isDisabled={isLoading}
-            >
-              ยกเลิก
-            </Button>
             <Button
               color="success"
               size="sm"
               onPress={handleConfirmSubmit}
               isLoading={isLoading}
-              className="font-bold"
+              isDisabled={isUploading}
+              className="font-bold w-full"
             >
               ยืนยันส่งงาน
             </Button>

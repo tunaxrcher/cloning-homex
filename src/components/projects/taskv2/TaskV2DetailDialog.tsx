@@ -33,6 +33,7 @@ import {
   AlertTriangle,
   UserPlus,
   Users,
+  ClipboardCheck,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import type {
@@ -47,9 +48,10 @@ import TaskV2CardTab from "./TaskV2CardTab";
 import TaskV2ProcurementTab from "./TaskV2ProcurementTab";
 import TaskV2QCFieldTab from "./TaskV2QCFieldTab";
 import TaskV2ActualBudgetTab from "./TaskV2ActualBudgetTab";
+import TaskV2SubmitResultTab from "./TaskV2SubmitResultTab";
 import DeleteTaskModal from "../DeleteTaskModal";
 
-type V2Tab = "card" | "prpo" | "qcfield" | "actual_budget";
+type V2Tab = "card" | "prpo" | "qcfield" | "actual_budget" | "submit_result";
 
 const TaskV2DetailDialog = ({
   task,
@@ -278,6 +280,8 @@ const TaskV2DetailDialog = ({
     }
   };
 
+  const hasSubmitResult = !!(task?.submitNote || task?.submitImages);
+
   const tabs = [
     {
       key: "card" as V2Tab,
@@ -299,6 +303,15 @@ const TaskV2DetailDialog = ({
       label: "งบประมาณจริง",
       icon: <Wallet size={16} />,
     },
+    ...(hasSubmitResult
+      ? [
+          {
+            key: "submit_result" as V2Tab,
+            label: "ผลงาน",
+            icon: <ClipboardCheck size={16} />,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -621,7 +634,12 @@ const TaskV2DetailDialog = ({
 
             {/* ===== TAB CONTENT ===== */}
             <div className="p-4 sm:p-6">
-              {activeTab === "actual_budget" ? (
+              {activeTab === "submit_result" ? (
+                <TaskV2SubmitResultTab
+                  submitNote={task.submitNote || null}
+                  submitImages={task.submitImages || null}
+                />
+              ) : activeTab === "actual_budget" ? (
                 <TaskV2ActualBudgetTab
                   taskId={task.id}
                   organizationId={task.organizationId}

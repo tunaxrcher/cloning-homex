@@ -812,7 +812,7 @@ export interface TaskV2DetailDialogProps {
   onEditSubtask: (subtaskId: number, newName: string) => void;
   onAddToProcurement: (material: TaskV2Material) => Promise<boolean>;
   onStartTask: (startDate: string) => Promise<void>;
-  onSubmitTask: (finishDate: string) => Promise<void>;
+  onSubmitTask: (finishDate: string, submitNote?: string, submitImages?: string[]) => Promise<void>;
   onBudgetChange?: (newBudget: number) => void;
   onDeleteTask?: () => Promise<void>;
   onReanalyze?: (aiData: TaskV2AIResponse) => Promise<void>;

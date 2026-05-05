@@ -873,6 +873,8 @@ export async function startTaskV2(
 export async function submitTaskV2(
   taskId: number,
   finishDate: string,
+  submitNote?: string,
+  submitImages?: string[],
 ): Promise<ActionState> {
   try {
     const session = await auth();
@@ -899,6 +901,8 @@ export async function submitTaskV2(
         status: "DONE",
         progressPercent: 100,
         updatedAt: new Date(),
+        submitNote: submitNote?.trim() || null,
+        submitImages: submitImages && submitImages.length > 0 ? JSON.stringify(submitImages) : null,
       },
     });
 

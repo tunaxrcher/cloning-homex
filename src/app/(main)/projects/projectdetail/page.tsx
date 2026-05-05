@@ -53,6 +53,8 @@ const Page = async () => {
       phase: true,
       aiRefDescription: true,
       aiRefImages: true,
+      submitNote: true,
+      submitImages: true,
       taskUsers: {
         include: {
           user: {

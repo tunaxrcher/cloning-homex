@@ -318,14 +318,21 @@ const TaskV2Section = ({
   );
 
   const handleSubmitTask = useCallback(
-    async (finishDate: string) => {
+    async (finishDate: string, submitNote?: string, submitImages?: string[]) => {
       if (!selected) return;
-      const res = await submitTaskV2(selected.id, finishDate);
+      const res = await submitTaskV2(selected.id, finishDate, submitNote, submitImages);
       if (res.success) {
         setTasks((prev: any[]) =>
           prev.map((t) =>
             t.id === selected.id
-              ? { ...t, finishActual: finishDate, status: "DONE", progressPercent: 100 }
+              ? {
+                  ...t,
+                  finishActual: finishDate,
+                  status: "DONE",
+                  progressPercent: 100,
+                  submitNote: submitNote || null,
+                  submitImages: submitImages ? JSON.stringify(submitImages) : null,
+                }
               : t
           )
         );

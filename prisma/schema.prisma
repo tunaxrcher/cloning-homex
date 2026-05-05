@@ -387,6 +387,10 @@ model task {
   aiRefDescription String? @db.Text     // คำอธิบายเพิ่มเติมสำหรับ AI
   aiRefImages      String? @db.LongText // JSON array ของ image URLs
 
+  // --- Submit Result (ผลงานที่แนบตอนส่งงาน) ---
+  submitNote   String? @db.Text     // หมายเหตุ/ผลงาน (text + links)
+  submitImages String? @db.LongText // JSON array ของ image URLs
+
   // ---------- relations ----------
   details                task_detail[] // ขั้นตอนย่อยของ task
   taskUsers              task_user[]
