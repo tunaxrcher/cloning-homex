@@ -22,6 +22,7 @@ import { toast } from "react-toastify";
 import { updateTaskStatus, updateMainTask, toggleSubtaskStatus, startTaskV2, submitTaskV2 } from "@/lib/actions/actionProject";
 import { reorderSubtasks, editSubtaskName, replaceTaskV2AiData, updateTaskV2Info } from "@/lib/actions/actionTaskV2";
 import { addMaterialToProcurement } from "@/lib/actions/actionProcurementSuggestion";
+import { addTaskMembers, removeTaskMember } from "@/lib/actions/actionTaskMember";
 import MainTaskCard from "../MainTaskCard";
 import TaskFilterTabs from "../TaskFilterTabs";
 import { EmptyStateCard } from "../EmptyStateCard";
@@ -462,6 +463,64 @@ const TaskV2Section = ({
     [selected, setTasks]
   );
 
+  const handleAddAssignee = useCallback(
+    async (userId: number) => {
+      if (!selected) return;
+      // Optimistic update
+      const member = projectMembers.find((m: any) => m.id === userId);
+      if (member) {
+        setTasks((prev: any[]) =>
+          prev.map((t) =>
+            t.id === selected.id
+              ? { ...t, assignees: [...(t.assignees || []), member] }
+              : t
+          )
+        );
+      }
+      const res = await addTaskMembers(selected.id, [userId]);
+      if (!res.success) {
+        toast.error("เพิ่มผู้รับผิดชอบไม่สำเร็จ");
+        // Revert
+        setTasks((prev: any[]) =>
+          prev.map((t) =>
+            t.id === selected.id
+              ? { ...t, assignees: (t.assignees || []).filter((a: any) => a.id !== userId) }
+              : t
+          )
+        );
+      } else {
+        toast.success("เพิ่มผู้รับผิดชอบแล้ว");
+      }
+    },
+    [selected, setTasks, projectMembers]
+  );
+
+  const handleRemoveAssignee = useCallback(
+    async (userId: number) => {
+      if (!selected) return;
+      // Optimistic update
+      const prevAssignees = selected.assignees || [];
+      setTasks((prev: any[]) =>
+        prev.map((t) =>
+          t.id === selected.id
+            ? { ...t, assignees: (t.assignees || []).filter((a: any) => a.id !== userId) }
+            : t
+        )
+      );
+      const res = await removeTaskMember(selected.id, userId);
+      if (!res.success) {
+        toast.error("ลบผู้รับผิดชอบไม่สำเร็จ");
+        // Revert
+        setTasks((prev: any[]) =>
+          prev.map((t) =>
+            t.id === selected.id ? { ...t, assignees: prevAssignees } : t
+          )
+        );
+      }
+    },
+    [selected, setTasks]
+  );
+
   const handleDragEnd = useCallback(
     async (e: DragEndEvent) => {
       const { active, over } = e;
@@ -640,6 +699,9 @@ const TaskV2Section = ({
         onDeleteTask={handleDeleteTask}
         onReanalyze={handleReanalyze}
         onUpdateTaskInfo={handleUpdateTaskInfo}
+        projectMembers={projectMembers}
+        onAddAssignee={!isCustomer ? handleAddAssignee : undefined}
+        onRemoveAssignee={!isCustomer ? handleRemoveAssignee : undefined}
       />
     </div>
   );

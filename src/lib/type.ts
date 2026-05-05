@@ -96,6 +96,7 @@ export interface Task {
       alertDaysBefore: number | null;
     };
   }[];
+  assignees?: { id: number; displayName: string }[];
 }
 
 export interface ProjectDetailProps {
@@ -823,6 +824,9 @@ export interface TaskV2DetailDialogProps {
     startPlanned?: string | null;
     finishPlanned?: string | null;
   }) => Promise<void>;
+  projectMembers?: any[];
+  onAddAssignee?: (userId: number) => Promise<void>;
+  onRemoveAssignee?: (userId: number) => Promise<void>;
 }
 
 export interface CreateTaskV2ModalProps {

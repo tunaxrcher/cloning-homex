@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { calcProgress, getStatusMainTaskColor } from "@/lib/setting_data";
 import { MainTaskCardProps } from "@/lib/type";
-import { Card, CardBody, Chip, Progress, Tooltip } from "@heroui/react";
+import { Avatar, Card, CardBody, Chip, Progress, Tooltip } from "@heroui/react";
 import { Banknote, AlertTriangle, Clock, Package, PackageX, PackageMinus } from "lucide-react";
+
 
 const MainTaskCard = ({ task, onSelect }: MainTaskCardProps) => {
   const procurementAlerts = useMemo(() => {
@@ -142,6 +143,19 @@ const MainTaskCard = ({ task, onSelect }: MainTaskCardProps) => {
             </span>
           </div>
         </div>
+
+        {(task.assignees || []).length > 0 && (
+          <div className="flex flex-wrap gap-2 w-full">
+            {task.assignees!.map((u) => (
+              <div key={u.id} className="flex flex-col items-center gap-0.5">
+                <Avatar size="sm" name={u.displayName} className="w-6 h-6 text-[10px]" />
+                <span className="text-[9px] text-default-500 dark:text-zinc-400 max-w-[48px] truncate text-center">
+                  {u.displayName}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <Progress
           size="sm"

@@ -11,6 +11,10 @@ import {
   Progress,
   Button,
   Input,
+  Avatar,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
 } from "@heroui/react";
 import {
   FileText,
@@ -27,6 +31,8 @@ import {
   Sparkles,
   DollarSign,
   AlertTriangle,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import type {
@@ -61,6 +67,9 @@ const TaskV2DetailDialog = ({
   onDeleteTask,
   onReanalyze,
   onUpdateTaskInfo,
+  projectMembers,
+  onAddAssignee,
+  onRemoveAssignee,
 }: TaskV2DetailDialogProps) => {
   const [activeTab, setActiveTab] = useState<V2Tab>("card");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -506,6 +515,85 @@ const TaskV2DetailDialog = ({
                   className="w-full"
                 />
               </div>
+
+              {/* ===== ASSIGNEES ===== */}
+              {onAddAssignee && (
+                <div className="space-y-2 pt-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                      <Users size={14} />
+                      <span>ผู้รับผิดชอบ</span>
+                    </div>
+                    <Popover placement="bottom-end">
+                      <PopoverTrigger>
+                        <Button
+                          size="sm"
+                          variant="flat"
+                          className="h-7 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs gap-1"
+                        >
+                          <UserPlus size={12} />
+                          เพิ่ม
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="bg-zinc-900 border border-zinc-700 p-2 w-64 max-h-60 overflow-y-auto">
+                        <div className="space-y-1">
+                          <p className="text-xs text-zinc-400 font-medium px-2 pb-1">เลือกสมาชิก</p>
+                          {(projectMembers || []).filter(
+                            (m: any) => !(task.assignees || []).some((a: any) => a.id === m.id)
+                          ).length === 0 ? (
+                            <p className="text-xs text-zinc-500 text-center py-3">เพิ่มครบแล้ว</p>
+                          ) : (
+                            (projectMembers || []).filter(
+                              (m: any) => !(task.assignees || []).some((a: any) => a.id === m.id)
+                            ).map((m: any) => (
+                              <button
+                                key={m.id}
+                                onClick={() => onAddAssignee(m.id)}
+                                className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors text-left"
+                              >
+                                <Avatar size="sm" name={m.displayName} className="w-6 h-6 text-[10px] shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-xs text-white truncate">{m.displayName}</p>
+                                  {m.position?.positionName && (
+                                    <p className="text-[10px] text-zinc-500 truncate">{m.position.positionName}</p>
+                                  )}
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  {(task.assignees || []).length > 0 ? (
+                    <div className="flex flex-wrap gap-3">
+                      {task.assignees.map((u: any) => (
+                        <div key={u.id} className="flex flex-col items-center gap-1 relative group">
+                          <Avatar
+                            size="sm"
+                            name={u.displayName}
+                            className="w-8 h-8 text-[11px]"
+                          />
+                          <span className="text-[10px] text-zinc-300 max-w-[56px] truncate text-center">
+                            {u.displayName}
+                          </span>
+                          {onRemoveAssignee && (
+                            <button
+                              onClick={() => onRemoveAssignee(u.id)}
+                              className="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 text-white rounded-full text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                              title={`ลบ ${u.displayName}`}
+                            >
+                              <X size={8} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-600">ยังไม่มีผู้รับผิดชอบ</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* ===== TAB NAVIGATION ===== */}
