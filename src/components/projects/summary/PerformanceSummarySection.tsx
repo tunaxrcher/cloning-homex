@@ -13,7 +13,7 @@ import {
   Award,
   User as UserIcon,
 } from "lucide-react";
-import { Avatar, Chip, Progress } from "@heroui/react";
+import { Avatar, Chip, Progress, Tooltip } from "@heroui/react";
 import TaskV2DetailDialog from "../taskv2/TaskV2DetailDialog";
 
 interface PerformanceSummarySectionProps {
@@ -384,24 +384,28 @@ export default function PerformanceSummarySection({
 
                   {/* Stat Badges */}
                   <div className="hidden sm:flex items-center gap-2">
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color="success"
-                      startContent={
-                        <CheckCircle className="w-3 h-3 ml-1" />
-                      }
-                    >
-                      {member.doneTasks}
-                    </Chip>
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color="primary"
-                      startContent={<Clock className="w-3 h-3 ml-1" />}
-                    >
-                      {member.progressTasks}
-                    </Chip>
+                    <Tooltip content="เสร็จแล้ว" size="sm">
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        color="success"
+                        startContent={
+                          <CheckCircle className="w-3 h-3 ml-1" />
+                        }
+                      >
+                        {member.doneTasks}
+                      </Chip>
+                    </Tooltip>
+                    <Tooltip content="กำลังทำ" size="sm">
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        color="primary"
+                        startContent={<Clock className="w-3 h-3 ml-1" />}
+                      >
+                        {member.progressTasks}
+                      </Chip>
+                    </Tooltip>
                     {/* <Chip size="sm" variant="flat" color="default">
                       {member.todoTasks}
                     </Chip> */}
