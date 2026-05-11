@@ -179,7 +179,13 @@ const TaskV2Section = ({
         totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
 
       // Optimistic UI update (progress + details in one call)
-      const newTaskStatus = progress > 0 ? "PROGRESS" : "TODO";
+      // If task was already submitted (finishActual set), keep status as DONE
+      const isAlreadySubmitted = !!selected.finishActual;
+      const newTaskStatus = isAlreadySubmitted
+        ? "DONE"
+        : progress > 0
+          ? "PROGRESS"
+          : "TODO";
       setTasks((prev: any[]) =>
         prev.map((t) =>
           t.id === selected.id

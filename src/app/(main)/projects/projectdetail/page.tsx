@@ -97,16 +97,30 @@ const Page = async () => {
     },
   });
 
-  const formattedTasks = mainTasks.map((task) => ({
-    ...task,
-    budget: task.budget ? Number(task.budget) : null,
-    estimatedBudget: task.estimatedBudget ? Number(task.estimatedBudget) : null,
-    aiMaterialCost: task.aiMaterialCost ? Number(task.aiMaterialCost) : null,
-    aiLaborCost: task.aiLaborCost ? Number(task.aiLaborCost) : null,
-    aiMachineryCost: task.aiMachineryCost ? Number(task.aiMachineryCost) : null,
-    assignees: task.taskUsers?.map((t: any) => t.user) || [],
-    contractors: task.taskContractors?.map((tc: any) => tc.contractor) || [],
-  }));
+  const formattedTasks = mainTasks.map((task: any) => {
+    const wasSubmitted = !!task.finishActual;
+
+    // Fix stale status: if task was submitted (finishActual set), it should be DONE
+    const correctedStatus =
+      wasSubmitted && task.status === "PROGRESS" ? "DONE" : task.status;
+    const correctedProgress =
+      wasSubmitted && (task.progressPercent ?? 0) < 100
+        ? 100
+        : task.progressPercent;
+
+    return {
+      ...task,
+      status: correctedStatus,
+      progressPercent: correctedProgress,
+      budget: task.budget ? Number(task.budget) : null,
+      estimatedBudget: task.estimatedBudget ? Number(task.estimatedBudget) : null,
+      aiMaterialCost: task.aiMaterialCost ? Number(task.aiMaterialCost) : null,
+      aiLaborCost: task.aiLaborCost ? Number(task.aiLaborCost) : null,
+      aiMachineryCost: task.aiMachineryCost ? Number(task.aiMachineryCost) : null,
+      assignees: task.taskUsers?.map((t: any) => t.user) || [],
+      contractors: task.taskContractors?.map((tc: any) => tc.contractor) || [],
+    };
+  });
 
   return (
     <ProjectDetail
