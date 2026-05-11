@@ -13,6 +13,7 @@ import {
   Sparkles,
   Calendar,
   LayoutDashboard,
+  Trophy,
 } from "lucide-react";
 
 import {
@@ -80,6 +81,7 @@ import DasboardMapping360 from "./360mapping/DasboardMapping360";
 import TaskV2Section from "./taskv2/TaskV2Section";
 import PlanningSection from "./planning/PlanningSection";
 import ProjectDashboard from "./dashboard/projects/ConstructionDashboard";
+import PerformanceSummarySection from "./summary/PerformanceSummarySection";
 
 const ProjectDetail = ({
   organizationId,
@@ -942,7 +944,7 @@ const ProjectDetail = ({
       </div>
 
       <div className="w-full">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 bg-default-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl w-full">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 bg-default-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl w-full">
           {[
             {
               id: "dashboard",
@@ -970,6 +972,7 @@ const ProjectDetail = ({
             },
             { id: "documents", label: "เอกสาร", icon: <FileText size={18} /> },
             { id: "planning", label: "แผนงาน", icon: <Calendar size={18} /> },
+            { id: "summary", label: "สรุปผลงาน", icon: <Trophy size={18} /> },
             // { id: "camera", label: "กล้อง", icon: <Cctv size={18} /> },
             // { id: "360mapping", label: "360°", icon: <View size={18} /> },
           ].map((item) => (
@@ -1191,6 +1194,14 @@ const ProjectDetail = ({
           />
         )}
 
+        {activeSection === "summary" && (
+          <PerformanceSummarySection
+            tasks={tasks}
+            projectMembers={projectMembers}
+            projectInfo={projectInfo}
+          />
+        )}
+
         {activeSection === "dashboard" && (
           <ProjectDashboard
             currentUserId={currentUserId}
@@ -1211,6 +1222,7 @@ const ProjectDetail = ({
           "purchasing",
           "planning",
           "taskv2",
+          "summary",
         ].includes(activeSection) && (
           <div className="flex flex-col items-center justify-center p-20 bg-default-50 rounded-3xl border-2 border-dashed">
             <p className="text-default-400 font-bold uppercase tracking-widest">

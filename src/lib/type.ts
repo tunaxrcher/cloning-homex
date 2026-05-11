@@ -278,6 +278,7 @@ export type SectionType =
   | "360mapping"
   | "feed"
   | "taskv2"
+  | "summary"
   | (string & {});
 
 export type CreateSupplierProps = {
