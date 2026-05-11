@@ -141,11 +141,11 @@ export default function PerformanceSummarySection({
 
   // Auto-expand top 3 on first render
   useMemo(() => {
-    const top3Ids = memberSummaries
+    const top2Ids = memberSummaries
       .filter((m) => m.totalTasks > 0)
-      .slice(0, 3)
+      .slice(0, 2)
       .map((m) => m.id);
-    setExpandedMemberIds(new Set(top3Ids));
+    setExpandedMemberIds(new Set(top2Ids));
   }, [memberSummaries]);
 
   const toggleExpand = (id: number) => {
