@@ -972,7 +972,7 @@ const ProjectDetail = ({
             },
             { id: "documents", label: "เอกสาร", icon: <FileText size={18} /> },
             { id: "planning", label: "แผนงาน", icon: <Calendar size={18} /> },
-            { id: "summary", label: "สรุปผลงาน", icon: <Trophy size={18} /> },
+            { id: "summary", label: "ผลงานรายบุคคล", icon: <Trophy size={18} /> },
             // { id: "camera", label: "กล้อง", icon: <Cctv size={18} /> },
             // { id: "360mapping", label: "360°", icon: <View size={18} /> },
           ].map((item) => (

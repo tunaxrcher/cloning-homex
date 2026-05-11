@@ -255,7 +255,7 @@ export default function PerformanceSummarySection({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold">สรุปผลงานรายบุคคล</h2>
+        <h2 className="text-xl sm:text-2xl font-bold">ผลงานรายบุคคล</h2>
         <p className="text-default-500 text-xs sm:text-sm mt-1">
           ดูภาพรวมผลงานของสมาชิกแต่ละคนในโปรเจกต์
         </p>
